@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.git/
+.gitignore
+.dockerignore
+docker-compose.yml
+README.md
+outputs/
+models/
+*.png
+*.jpg
+# Add other files/directories if they are not needed in the image

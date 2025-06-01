@@ -1,0 +1,46 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  sdxl_instantid_worker:
+    build:
+      context: . # Project root, where Dockerfile will be referenced from
+      dockerfile: docker/Dockerfile # Path to the Dockerfile
+    container_name: sdxl_instantid_service
+    ports:
+      - "7860:8000" # Host port 7860 maps to container port 8000 (where Uvicorn runs)
+    volumes:
+      - ./models_hf:/app/models_hf # Persist downloaded models
+      - ./outputs:/app/outputs     # Persist generated images and metadata
+      - ./uploads:/app/uploads     # Persist uploaded files (useful for dev, review for prod)
+      # For development, you might want to mount the app code:
+      # - ./app:/app/app
+      # But for a "built" image, the code is copied in by Dockerfile.
+    environment:
+      - MODEL_CACHE_DIR=/app/models_hf
+      # Add any other environment variables your app might need
+      # - NVIDIA_VISIBLE_DEVICES=all # Often set at runtime or globally
+      # - NVIDIA_DRIVER_CAPABILITIES=compute,utility # Often set at runtime
+    # GPU support (requires NVIDIA Docker runtime on the host)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1 # Request 1 GPU. Use "all" for all available GPUs.
+              capabilities: [gpu]
+    # Alternative for older docker-compose versions or direct docker run:
+    # runtime: nvidia # If NVIDIA container runtime is default
+    # restart: unless-stopped # Optional: restart policy
+    # healthcheck: # Optional: define a healthcheck
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/docs"] # FastAPI's /docs endpoint
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s # Give time for models to load
+
+# Optional: Define named volumes for better management if preferred over host mounts
+# volumes:
+#   models_hf_data:
+#   outputs_data:
+#   uploads_data:

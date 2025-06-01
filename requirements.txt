@@ -1,0 +1,25 @@
+# Core ML/DL
+torch
+torchvision
+# For SDXL, InstantID, CLIP, etc.
+diffusers
+transformers
+accelerate # Often needed by diffusers
+# Image processing
+Pillow
+opencv-python
+# For potential downloading of models
+huggingface_hub
+fastapi
+uvicorn[standard] # [standard] includes pydantic, an http server, etc.
+python-multipart # For form data (file uploads)
+# Added for InstantID face processing
+insightface
+onnxruntime # For CPU. For GPU, consider onnxruntime-gpu and matching CUDA version.
+
+# Testing
+pytest
+pytest-asyncio
+httpx # For testing FastAPI endpoints
+pytest-mock
+xformers # For performance (optional, can be build-specific)

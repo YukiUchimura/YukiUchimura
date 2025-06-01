@@ -1,0 +1,68 @@
+# .github/workflows/ci.yml
+name: Python Application CI
+
+on:
+  push:
+    branches: [ "main", "develop" ] # Adjust branches as needed
+  pull_request:
+    branches: [ "main", "develop" ] # Adjust branches as needed
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"] # Specify Python versions to test against
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies (if any, e.g., for OpenCV headless)
+      run: |
+        # Example: sudo apt-get update && sudo apt-get install -y libgl1-mesa-glx
+        # Add any other system packages required by your Python dependencies
+        # For now, assuming Python packages handle their direct needs or Docker is for full env.
+        # The Dockerfile has: libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev
+        # For CI, we might need some of these for opencv-python or insightface if not using Docker for tests.
+        # Let's add them for opencv-python which is used by insightface.
+        sudo apt-get update -q
+        sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libsm6 libxext6
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Test dependencies are already in requirements.txt as per previous step.
+        # If they were in a separate requirements-dev.txt, install that too.
+
+    - name: Run linters (optional, e.g., flake8 or ruff)
+      run: |
+        # pip install flake8
+        # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # pip install ruff
+        # ruff check .
+        echo "Linter checks (e.g., Ruff/Flake8) can be added here."
+
+    - name: Run Pytest
+      run: |
+        # The MODEL_CACHE_DIR is used by pipeline.py.
+        # For unit tests, models are mocked, so actual downloading shouldn't happen.
+        # However, the code might still try to create/check this directory.
+        # Pytest tests should run from the project root.
+        mkdir -p ./models_hf # Ensure directory exists if code expects it, even if not used by mocks
+        pytest tests/
+        # F-06 mentions "low load generation (256x256) in CI".
+        # This is an integration test. For now, we are only running unit tests.
+        # Implementing a true low-load generation test in CI would require:
+        # - Securely handling Hugging Face token for model downloads (if private models).
+        # - Caching downloaded models in CI to speed up runs.
+        # - Sufficient runner resources (CPU/memory, potentially GPU if not mocked).
+        # - Modifying tests or having specific integration test scripts.
+        # This will be noted as a potential future enhancement for this workflow.
