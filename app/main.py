@@ -1,3 +1,4 @@
+import app._hf_login  # Auto-login if token exists
 import io
 import os
 import uuid

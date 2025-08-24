@@ -1,25 +1,24 @@
-version: "3.8"
 services:
   api:
     build:
       context: .
-      dockerfile: docker/Dockerfile
-    container_name: face_synthesis_api
+      dockerfile: Dockerfile   # ← ルートへ移動した Dockerfile を参照
     ports:
       - "7860:7860"
-    environment:
-      MODEL_CACHE_DIR: /workspace/models_hf
-      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN}
-      NVIDIA_VISIBLE_DEVICES: all
-      PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:128"
     volumes:
       - ./models_hf:/workspace/models_hf
       - ./uploads:/workspace/uploads
       - ./outputs:/workspace/outputs
+    env_file:
+      - .env                   # ← ここからトークン等を取り込み
+    environment:
+      - HF_HOME=/workspace/models_hf
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+      # 互換性のため両方エクスポート（huggingface_hub はどちらでも可）
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}
+      - HF_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}
     deploy:
       resources:
         reservations:
           devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+            - capabilities: ["gpu"]   # Docker Desktop で GPU を有効化しておく
