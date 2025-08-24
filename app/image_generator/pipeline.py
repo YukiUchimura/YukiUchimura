@@ -68,10 +68,17 @@ def load_models() -> None:
 
         # OpenPose Detector
         print("[load_models] Loading OpenposeDetector ...")
-        openpose_detector = OpenposeDetector.from_pretrained(
-            "lllyasviel/ControlNet", cache_dir=MODEL_CACHE_DIR
-        )
-        print("[load_models] OpenposeDetector loaded.")
+        try:
+            openpose_detector = OpenposeDetector.from_pretrained(
+                "lllyasviel/ControlNet", cache_dir=MODEL_CACHE_DIR
+            )
+            print("[load_models] OpenposeDetector loaded.")
+        except Exception as e:
+            print(f"[load_models] Failed to load OpenPose annotator: {e}")
+            print("This may be due to a network issue, a firewall/proxy, or a missing Hugging Face token.")
+            print("Please check your network connection and credentials.")
+            raise
+
 
         # ControlNet (InstantID, OpenPose)
         print("[load_models] Loading ControlNet models ...")

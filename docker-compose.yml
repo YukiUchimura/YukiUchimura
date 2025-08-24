@@ -1,5 +1,4 @@
 version: "3.8"
-
 services:
   api:
     build:
@@ -10,15 +9,13 @@ services:
       - "7860:7860"
     environment:
       MODEL_CACHE_DIR: /workspace/models_hf
-      # Hugging Face の Private モデル等で必要になる場合は .env に設定してください
       HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN}
       NVIDIA_VISIBLE_DEVICES: all
+      PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:128"
     volumes:
-      # Windows のパスはスラッシュでも OK（Docker Desktop）
-      - F:/face_synthesis/models_hf:/workspace/models_hf
-      - F:/face_synthesis/uploads:/workspace/uploads
-      - F:/face_synthesis/outputs:/workspace/outputs
-    # Compose v3 で GPU を使うための指定（Docker Desktop 環境では driver/capabilities を使う）
+      - ./models_hf:/workspace/models_hf
+      - ./uploads:/workspace/uploads
+      - ./outputs:/workspace/outputs
     deploy:
       resources:
         reservations:
