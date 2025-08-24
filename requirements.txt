@@ -1,25 +1,11 @@
-# Core ML/DL
-torch
-torchvision
-# For SDXL, InstantID, CLIP, etc.
-diffusers
-transformers
-accelerate # Often needed by diffusers
-# Image processing
+numpy<2.0
+opencv-python-headless==4.9.0.80
+diffusers==0.27.2
+transformers==4.39.1
+accelerate==0.29.3
+insightface==0.7.3
+controlnet_aux==0.0.8
 Pillow
-opencv-python
-# For potential downloading of models
-huggingface_hub
 fastapi
-uvicorn[standard] # [standard] includes pydantic, an http server, etc.
-python-multipart # For form data (file uploads)
-# Added for InstantID face processing
-insightface
-onnxruntime # For CPU. For GPU, consider onnxruntime-gpu and matching CUDA version.
-
-# Testing
-pytest
-pytest-asyncio
-httpx # For testing FastAPI endpoints
-pytest-mock
-xformers # For performance (optional, can be build-specific)
+uvicorn[standard]
+python-multipart
