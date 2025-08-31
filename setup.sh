@@ -1,63 +1,32 @@
-#!/bin/bash
-# setup.sh - Basic setup and run script for SDXL InstantID Generator
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "SDXL InstantID Generator Setup"
-echo "--------------------------------"
-
-# Check if Docker is installed
-if ! command -v docker &> /dev/null
-then
-    echo "Docker could not be found. Please install Docker first."
-    echo "Visit https://docs.docker.com/get-docker/"
-    exit 1
+# HFトークンがあれば非対話でログイン
+if [[ -n "${HUGGING_FACE_HUB_TOKEN:-}" ]]; then
+  python - <<'PY'
+import os, subprocess
+tok=os.environ.get("HUGGING_FACE_HUB_TOKEN","")
+if tok:
+    subprocess.run(["python","-m","huggingface_hub.cli","login","--token",tok,"--add-to-git-credential","--quiet"], check=False)
+PY
 fi
 
-# Check if Docker Compose is installed (v2 syntax: docker compose)
-if ! docker compose version &> /dev/null
-then
-    echo "Docker Compose (v2 syntax: 'docker compose') could not be found."
-    echo "It's usually included with Docker Desktop. For Linux, see: https://docs.docker.com/compose/install/"
-    # Attempt to check for older 'docker-compose' if 'docker compose' fails
-    if ! command -v docker-compose &> /dev/null
-    then
-        echo "Older 'docker-compose' also not found. Please install Docker Compose."
-        exit 1
-    else
-        echo "Found older 'docker-compose'. Will use that."
-        COMPOSE_CMD="docker-compose"
-    fi
-else
-    COMPOSE_CMD="docker compose"
-fi
+# 主要モデルの事前取得（キャッシュへ）
+python - <<'PY'
+from huggingface_hub import snapshot_download
+import os
 
-echo "Using Docker Compose command: $COMPOSE_CMD"
+cache=os.environ.get("HF_HOME","/workspace/.cache/huggingface")
+os.makedirs(cache, exist_ok=True)
 
-# Ensure directories for volumes exist (Docker typically creates them, but good practice)
-echo "Ensuring local directories for Docker volumes exist..."
-mkdir -p ./models_hf
-mkdir -p ./outputs
-mkdir -p ./uploads
-
-echo ""
-echo "Building Docker image (this might take a while on first run)..."
-$COMPOSE_CMD build
-if [ $? -ne 0 ]; then
-    echo "Docker build failed. Please check error messages."
-    exit 1
-fi
-
-echo ""
-echo "Starting the application using Docker Compose..."
-echo "FastAPI backend will be available on http://localhost:7860"
-echo "React frontend (if run separately using npm start) on http://localhost:3000"
-echo "Press Ctrl+C to stop."
-echo ""
-
-$COMPOSE_CMD up
-
-# To run in detached mode, use:
-# $COMPOSE_CMD up -d
-# To stop, use:
-# $COMPOSE_CMD down
-
-echo "Application stopped."
+# SDXL Base
+snapshot_download(repo_id="stabilityai/stable-diffusion-xl-base-1.0", local_dir="/workspace/models/sdxl-base", local_dir_use_symlinks=False)
+# ControlNet OpenPose
+snapshot_download(repo_id="lllyasviel/sd-controlnet-openpose", local_dir="/workspace/models/controlnet-openpose", local_dir_use_symlinks=False)
+# IP-Adapter（SDXL向け）
+snapshot_download(repo_id="h94/IP-Adapter", local_dir="/workspace/models/ip-adapter", local_dir_use_symlinks=False)
+# InstantID
+snapshot_download(repo_id="InstantX/InstantID", local_dir="/workspace/models/instantid", local_dir_use_symlinks=False)
+# insightface の顔モデル（antelopev2）
+snapshot_download(repo_id="deepinsight/insightface", local_dir="/workspace/models/insightface", local_dir_use_symlinks=False, allow_patterns=["models/*","*.onnx","**/*.onnx"])
+PY

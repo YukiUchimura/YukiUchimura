@@ -2,23 +2,29 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile   # ← ルートへ移動した Dockerfile を参照
+      dockerfile: Dockerfile
+    image: face-synthesis-api:latest
+    container_name: face-synthesis-api
     ports:
-      - "7860:7860"
+      - "8000:8000"
     volumes:
-      - ./models_hf:/workspace/models_hf
-      - ./uploads:/workspace/uploads
+      - ./:/workspace
       - ./outputs:/workspace/outputs
-    env_file:
-      - .env                   # ← ここからトークン等を取り込み
+      - ./models:/workspace/models
+      - ./cache:/workspace/.cache/huggingface
     environment:
-      - HF_HOME=/workspace/models_hf
-      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
-      # 互換性のため両方エクスポート（huggingface_hub はどちらでも可）
-      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}
-      - HF_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN-}
+      HF_HOME: /workspace/.cache/huggingface
+      TRANSFORMERS_CACHE: /workspace/.cache/huggingface
+      DIFFUSERS_CACHE: /workspace/.cache/huggingface
+      PYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128
+    # Compose 1.28+ のGPU予約（Docker Desktopでも可）
     deploy:
       resources:
         reservations:
           devices:
-            - capabilities: ["gpu"]   # Docker Desktop で GPU を有効化しておく
+            - driver: nvidia
+              capabilities: [gpu]
+              count: 1
+    profiles: ["gpu"]
+    shm_size: "4gb"

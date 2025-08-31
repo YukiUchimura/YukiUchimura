@@ -1,13 +1,25 @@
+# TorchはDockerfileで固定導入済み（ここでは入れない）
 numpy==1.26.4
 opencv-python-headless==4.9.0.80
 diffusers==0.27.2
 transformers==4.39.1
 accelerate==0.29.3
+
+# face解析
 insightface==0.7.3
+onnxruntime-gpu==1.16.3
+
+# ControlNet/ポーズ・ユーティリティ
 controlnet_aux==0.0.8
-Pillow
-fastapi
-uvicorn[standard]
-python-multipart
-# ビルドで Cython を要求されたら↓のコメントを外してください
-# cython==3.0.10
+einops==0.8.1
+timm==0.6.7
+
+# API
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+python-multipart==0.0.20
+
+# その他
+psutil==7.0.0
+pydantic==2.11.7
+pydantic-core==2.33.2
